@@ -1,0 +1,100 @@
+/**This class stores information related to a given player (object) */
+
+class Players {
+
+	field int money;
+	field Array properties;
+	field int num_properties;
+	field int pos;
+	field boolean jail;
+	field int jail_turns;
+	
+
+	constructor Players new() {	/*create new player*/
+		let money = 800;
+		let num_properties = 0;
+		let pos = 0;
+		let properties = Array.new(11);
+		let jail = false;
+		let jail_turns = 0;
+		return this;
+	}
+
+	method void update_jail_turns(int set){	/* update number of turns in jail */
+		let jail_turns = set;
+		return;
+	}
+
+	method void update_jail(boolean status){	/* update jailed status */
+		let jail = status;
+		return;
+	}
+
+	method void move(int p) {	/*update player position on the board */
+		let pos = p;
+		return;
+	}
+
+	method void pay(int amt) {	/*deduct given amount of money */
+		let money = money - amt;
+		return;
+	}
+
+	method void collect(int amt) {	/* collect given amount of money */
+		let money = money + amt;
+		return;
+	}
+
+	method void buy(int s_no) {	/*add given property to list of owned properties */
+		let properties[num_properties] = s_no;	//add given property to array
+		let num_properties = num_properties + 1;	//increment owned properties number
+		return;
+	}
+
+	method void sell(int s_no) {	/*remove given property from list of owned properties */
+		var int i;
+		let i = 0;
+		let num_properties = num_properties - 1;	//decrement owned properties number
+		while (i < num_properties){
+			if (properties[i] = s_no){//if given property is found
+				let properties[i] = properties[num_properties];	//replace it with the last one in the array
+				let properties[num_properties] = 0;	//set the last one to 0
+				let i = num_properties;	//flag to exit loop
+			}
+			else {//if not found
+				let i = i + 1;	//increment and try again
+			}
+		}
+		return;
+	}
+	
+	method boolean jail_status(){	/*return jailed status */
+		return jail;
+	}
+
+	method int get_money() {	/*return money owned by player */
+		return money;
+	}
+
+	method int get_pos() {	/*return position of player on board */
+		return pos;
+	}
+
+	method int get_jail_turns(){	/*return number of turns the player has been in jail */
+		return jail_turns;
+	}
+
+	method int get_num_properties() {	/*return number of properties owned by player */
+		return num_properties;
+	}
+
+	method Array get_properties() {		/*return array of properties owned by player */
+		return properties;
+	}
+
+	method void dispose() {		/*dispose given player object */
+		do Memory.deAlloc(this);
+		return;
+	}
+
+}

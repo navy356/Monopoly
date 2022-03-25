@@ -1,0 +1,10 @@
+push local 3
+push argument 5
+push this 2
+push that 0
+push constant 23
+push static 1
+push temp 2
+push that 1
+push pointer 1
+push pointer 1

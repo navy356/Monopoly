@@ -1,0 +1,26 @@
+/** This class contains token x and y positions for given tile number */
+
+class Positions {
+
+	field int token_x1;
+	field int token_y1;
+
+	constructor Positions new(int x1, int y1) {	/*construct new pos object with x and y locations for token */
+		let token_x1 = x1;
+		let token_y1 = y1;
+		return this;
+	}
+
+	method int get_x1(){	/* get x location for token */
+		return token_x1;
+	}
+
+	method int get_y1(){	/* get y location for token */
+		return token_y1;
+	}
+
+	method void dispose(){	/*dispose positions object */
+		do Memory.deAlloc(this);
+		return;
+	}
+}

@@ -1,0 +1,205 @@
+class Screen {
+
+	static boolean color;
+
+	function void init() {
+		let color = true;
+		return;
+	}
+
+	function void clearScreen() {
+		var Array screen, i;
+		let screen = 16384;
+		let i = 0;
+		while ( i < 8192) {
+			let screen[0] = 0;
+			let i = i + 1;
+		}
+		return;
+	}
+
+	function void setColor(boolean b) {
+		let color = b;
+		return;
+	}
+
+	function void drawPixel(int x, int y) {
+		var int address, value, bit;
+		var int new_val;
+		var Array mask;
+		let address = 16384 + (32 * y) + (x/16);
+		let value = Memory.peek(address);
+		let bit = (x - (16 * (x/16)));
+		if (Math.bit(value, bit) = color) {
+			return;
+		}
+		let mask = Array.new(16);
+		let mask[0] = -2;
+		let mask[1] = -3;
+		let mask[2] = -5;
+		let mask[3] = -9;
+		let mask[4] = -17;
+		let mask[5] = -33;
+		let mask[6] = -65;
+		let mask[7] = -129;
+		let mask[8] = -257;
+		let mask[9] = -513;
+		let mask[10] = -1025;
+		let mask[11] = -2049;
+		let mask[12] = -4097;
+		let mask[13] = -8193;
+		let mask[14] = -16385;
+		let mask[15] = 32767;
+		if (color) {
+			let new_val = (~(mask[bit])) | value;
+			do mask.dispose();
+			do Memory.poke(address, new_val);
+			return;
+		}
+		else {
+			let new_val = mask[bit] & value;
+			do mask.dispose();
+			do Memory.poke(address, new_val);
+			return;
+		}
+	}
+
+	/*function void drawLine(int x1, int y1, int x2, int y2) {
+		var int a, b, diff, dx, dy;
+		var int dx_abs, dy_abs, a_abs, b_abs;
+		let a = 0;
+		let b = 0;
+		let diff = 0;
+		let dx = x2 - x1;
+		let dy = y2 - y1;
+		let dx_abs = Math.abs(dx);
+		let dy_abs = Math.abs(dy);
+		let a_abs = 0;
+		let b_abs = 0;
+
+		while ( (~(a_abs>dx_abs)) & (~(b_abs>dy_abs)) ) {
+			do Screen.drawPixel( x1 + a, y1 + b);
+			
+			if ( (diff < 0) | (dy = 0) ) {
+				if (dx > 0) {
+					let a = a + 1;
+				}
+				else {
+					let a = a - 1;
+				}
+				let diff = diff + dy_abs;
+				let a_abs = Math.abs(a);
+			}
+			else {
+				if (dy > 0) {
+					let b = b + 1;
+				}
+				else {
+					let b = b - 1;
+				}
+				let diff = diff - dx_abs;
+				let b_abs = Math.abs(b);
+			}
+
+		}
+
+		return;
+	}*/
+
+
+	function void drawLine(int x1, int y1, int x2, int y2) {
+		var int a, b, diff, dx, dy;
+		var int dx_abs, dy_abs, a_abs, b_abs;
+		let a = 0;
+		let b = 0;
+		let diff = 0;
+		let dx = x2 - x1;
+		let dy = y2 - y1;
+
+		if (dy = 0) {
+			while ( ~(a=dx) ) {
+				do Screen.drawPixel( x1 + a, y1);
+				if (dx > 0) {
+					let a = a + 1;
+				}
+				else {
+					let a = a - 1;
+				}
+
+			}
+			do Screen.drawPixel( x2, y1);
+			return;
+		}
+
+		if (dx = 0) {
+			while ( ~(b=dy) ) {
+				do Screen.drawPixel( x1, y1 + b);
+				if (dy > 0) {
+					let b = b + 1;
+				}
+				else {
+					let b = b - 1;
+				}
+
+			}
+			do Screen.drawPixel( x1, y2);
+			return;
+		}
+
+		while ( (~(a=dx)) | (~(b=dy)) ) {
+			do Screen.drawPixel( x1 + a, y1 + b);
+		
+			if ( diff < 0 ) {
+				if (dx > 0) {
+					let a = a + 1;
+				}
+				else {
+					let a = a - 1;
+				}
+				let diff = diff + Math.abs(dy);
+			}
+			else {
+				if (dy > 0) {
+					let b = b + 1;
+				}
+				else {
+					let b = b - 1;
+				}
+				let diff = diff - Math.abs(dx);
+			}
+
+		}
+		do Screen.drawPixel(x2, y2);
+		return;
+	}
+
+
+	function void drawCircle(int cx, int cy, int r) {
+		var int dy, dx;
+		var int r_sq;
+		let r_sq = r * r;
+		let dy = -r;
+
+		while (~(dy > r)) {
+			let dx = Math.sqrt(Math.abs(r_sq - (dy * dy) ));
+			do Screen.drawLine(cx - dx, cy + dy, cx + dx, cy + dy);
+			let dy = dy + 1;
+		}
+		return;
+	}
+
+		
+	function void drawRectangle(int x1, int y1, int x2, int y2) {
+		var int i;
+		let i = 0;
+
+		while(~(i > (y2 - y1) ) ) {
+			do Screen.drawLine(x1, y1 + i, x2, y1 + i);
+			let i = i + 1;
+		}
+
+		return;
+	}
+
+
+}

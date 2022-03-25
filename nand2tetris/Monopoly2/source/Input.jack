@@ -1,0 +1,127 @@
+/**This class has functions for taking inputs from user */
+
+class Input {
+
+	
+	function int prompt_scroll(){	/* prompt user to enter right arrow, left arrow or enter key */
+	var Array msg;
+	var boolean quit;
+	var char key;
+	let quit = false;
+	while(~quit) {
+		let key = Keyboard.keyPressed();
+		if(~(key = 0)) {	//if some key is pressed
+			if (key = 132) {//enter key
+				do Menu.clear_panel4();
+				return 1;
+			}
+
+			else { if (key = 130) {//left
+				do Menu.clear_panel4();
+				return 2;
+				}
+			else { if (key = 128) {//enter
+				do Menu.clear_panel4();
+				return 0;
+				}
+			else {	//if some other key is pressed
+				let msg = Array.new(5);
+				let msg[0] = "Right arrow:";
+				let msg[1] = "Move right";
+				let msg[2] = "Left arrow:";
+				let msg[3] = "Move left";
+				let msg[4] = "Enter to exit";
+				do Msg.flash_msg_multi(12,48,msg,5);	//display help message
+			}}}
+		}
+	}
+	return false;
+	}
+
+	function int prompt_sell(){	/* prompt user to enter right arrow, left arrow, S or enter key */
+	var Array msg;
+	var boolean quit;
+	var char key;
+	let quit = false;
+	while(~quit) {
+		let key = Keyboard.keyPressed();
+		if(~(key = 0)) {	//if some key is pressed
+			if (key = 132) {//enter key
+				do Menu.clear_panel4();
+				return 1;
+			}
+
+			else { if (key = 130) {//left
+				do Menu.clear_panel4();
+				return 2;
+				}
+			else { if (key = 128) {//enter
+				do Menu.clear_panel4();
+				return 0;
+				}
+			else { if (key = 83) {//S
+				do Menu.clear_panel4();
+				return 3;
+				}
+			else {	//if some other key is entered
+				let msg = Array.new(6);
+				let msg[0] = "Right arrow:";
+				let msg[1] = "Move right";
+				let msg[2] = "Left arrow:";
+				let msg[3] = "Move left";
+				let msg[4] = "S to sell";
+				let msg[5] = "Enter to exit";
+				do Msg.flash_msg_multi(11,48,msg,6);	//display help message
+			}}}}
+		}
+	}
+
+	return false;
+	}
+
+	function boolean prompt_y_n(){	/*prompt user to enter y or n */
+	var boolean quit;
+	var char key;
+	let quit = false;
+	while(~quit) {
+		let key = Keyboard.keyPressed();
+		if(~(key = 0)) {	//if some key is pressed
+			if (key = 89) {	//y
+				do Menu.clear_panel4();
+				return true;
+			}
+
+			else { if (key = 78) {	//n
+				do Menu.clear_panel4();
+				return false;
+				}
+			else {	//if some other key is pressed
+				do Msg.flash_corner_msg(20,48," Enter (Y/N)");	//display help message
+			}}
+		}
+	}
+
+	return false;
+	}
+
+	function boolean prompt_enter(){	/*prompt user to press enter */
+	var boolean quit;
+	var char key;
+	let quit = false;
+	while(~quit) {
+		let key = Keyboard.keyPressed();
+		if(~(key = 0)) {	//if some key is pressed
+			if (key = 128) {	//enter key
+				do Menu.clear_panel4();
+				return true;
+			}
+
+			else {	//if some other key is pressed
+				do Msg.flash_msg(20, 48, " Press Enter...",0);	//display help message
+			}
+		}
+	}
+
+	return false;
+	}
+}

@@ -1,0 +1,155 @@
+class Math {
+	static Array mask;
+	function void init() {
+		let mask = Array.new(16);
+		let mask[0] = -2;
+		let mask[1] = -3;
+		let mask[2] = -5;
+		let mask[3] = -9;
+		let mask[4] = -17;
+		let mask[5] = -33;
+		let mask[6] = -65;
+		let mask[7] = -129;
+		let mask[8] = -257;
+		let mask[9] = -513;
+		let mask[10] = -1025;
+		let mask[11] = -2049;
+		let mask[12] = -4097;
+		let mask[13] = -8193;
+		let mask[14] = -16385;
+		let mask[15] = 32767;
+		return;
+	}
+
+	function int max(int x, int y) {
+		if (x > y) {
+			return x;
+		}
+		else {
+			return y;
+		}
+	}
+
+	function int min(int x, int y) {
+		if (x < y) {
+			return x;
+		}
+		else {
+			return y;
+		}
+	}
+
+	function int multiply(int x, int y) {
+		var int sum,i;
+		var int shiftedX;
+		var Array mask;
+
+		let i = 0;
+		let shiftedX = x;
+
+		while (i < 16) {
+			if (Math.bit(y, i) = 1){
+				let sum = sum + shiftedX;
+			}
+			let shiftedX = shiftedX + shiftedX;
+			let i = i + 1;
+		}
+
+		return sum;
+	}
+
+	function int divide(int x, int y) {
+		var int q, x_abs, y_abs;
+
+		let x_abs = Math.abs(x);
+		let y_abs = Math.abs(y);
+
+		if ((y_abs > x_abs) | (y_abs < 0)) {
+			return 0;
+		}
+	
+		let q = Math.divide(x_abs, y_abs + y_abs);
+
+		let q = Math.abs(q);
+
+		if ((x_abs - (Math.multiply(2, Math.multiply(q, y_abs)))) < y_abs) {
+			if ( ((x > 0) & (y>0)) | ((x < 0) & (y < 0)) ) {
+				return q + q;
+			}
+			else {
+				return -(q + q);
+			}
+		}
+		else{
+			if ( ((x > 0) & (y>0)) | ((x < 0) & (y < 0)) ) {
+				return q + q + 1;
+			}
+			else {
+				return -(q + q + 1);
+			}
+		}
+	}
+
+	function int sqrt(int x){
+		var int y,j,tmp;
+		var Array mask;
+		
+		let mask = Array.new(8);
+		let mask[0] = 1;
+		let mask[1] = 2;
+		let mask[2] = 4;
+		let mask[3] = 8;
+		let mask[4] = 16;
+		let mask[5] = 32;
+		let mask[6] = 64;
+		let mask[7] = 128;
+
+		let j = 7;
+		let y = 0;
+
+		while ( ~(j < 0) ){
+			if ( (~(Math.multiply(y + mask[j], y + mask[j]) > x)) & (Math.multiply(y + mask[j], y + mask[j]) > 0) ) {
+				let y = y + mask[j];
+			}
+			let j = j - 1;
+		}
+
+		do mask.dispose();
+
+		return y;
+	}
+		
+
+	function int abs(int x) {
+		if (x < 0) {
+			return -x;
+		}
+		else {
+			return x;
+		}
+	}
+
+	function int bit(int x, int i) {
+		var int result;
+		let result = (x | mask[i]);
+
+		if (result = -1){
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+		
+}
+
+
+
+
+
+
+
+
+
+
+

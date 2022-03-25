@@ -1,0 +1,111 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in 
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM==0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time step. If reset==1 then the 
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put your code here:
+    Mux16 (a[0..14]=instruction[0..14], a[15]=false, b=m, sel=instruction[15], out=aregi);
+    Mux (a=true, b=writeA, sel=instruction[15], out=loada);
+    ARegister (in=aregi, load=loada, out[0..14]=arego, out[0..14]=addressM, out=arego16);
+   //Memory (address=arego, out=mrego);
+    
+    Mux4Way16 (a=false, b=false, c=arego16, d=inM, sel[0]=instruction[12], sel[1]=instruction[15], out=am);
+    //select A register value if 1110 else M if 1111
+    //load comp instructions
+    Mux (a=false, b=instruction[11], sel=instruction[15], out=zxl);
+    Mux (a=false, b=instruction[10], sel=instruction[15], out=nxl);
+    Mux (a=false, b=instruction[9], sel=instruction[15], out=zyl);
+    Mux (a=false, b=instruction[8], sel=instruction[15], out=nyl);
+    Mux (a=true, b=instruction[7], sel=instruction[15], out=fl);
+    Mux (a=false, b=instruction[6], sel=instruction[15], out=nol);
+    Mux16 (a=false, b=drego, sel=instruction[15], out=d);
+    ALU (x=d, y=am, zx=zxl, nx=nxl, zy=zyl, ny=nyl, f=fl, no=nol, out=outM, out=m, zr=zr, ng=ng);
+
+    Mux (a=false, b=true, sel=instruction[3], out=tmpo1);
+    //check if dest M is true
+    Mux (a=false, b=tmpo1, sel=instruction[15], out=writeM);
+    //check if it is C operation
+    Mux (a=false, b=true, sel=instruction[4], out=tmpo2);
+    //check if dest D is true
+    Mux (a=false, b=tmpo2, sel=instruction[15], out=writeD);
+    //check if it is C operation
+    Mux (a=false, b=true, sel=instruction[5], out=tmpo3);
+    //check if dest A is true
+    Mux (a=false, b=tmpo3, sel=instruction[15], out=writeA);
+    //check if it is C operation
+    
+    DRegister (in=m, load=writeD, out=drego);
+    
+    Not (in=ng, out=pg1);
+    Mux (a=pg1, b=false, sel=zr, out=pg);
+    //check if alu output is positive
+    Not (in=pg, out=pgn);
+    Not (in=ng, out=ngn);
+    Not (in=zr, out=zrn);
+    Mux (a=pgn, b=instruction[0] , sel=instruction[0], out=gtcondition);
+    //if output isn't supposed to be > 0, we assume it is negative -> 0 (is the condition)
+    Mux (a=zrn, b=instruction[1] , sel=instruction[1], out=zrcondition);
+    //if output isn't supposed to be = 0, we assume it is not zero -> 0
+    Mux (a=ngn, b=instruction[2] , sel=instruction[2], out=ltcondition);
+    //if output isn't supposed to be < 0, we assume it is positive -> 0
+
+    Xor (a=gtcondition, b=pg, out=gtcheck);
+    //if output is supposed to be > 0 returns 0 otherwise returns 1
+    //if output isn't supposed to > 0 always returns 1
+    Xor (a=zrcondition, b=zr, out=zcheck);
+    //if output is supposed to be = 0 returns 0 otherwise returns 1
+    //if output isn't supposed to = 0 always returns 1
+    Xor (a=ltcondition, b=ng, out=ltcheck);
+    //if output is supposed to be < 0 returns 0 otherwise returns 1
+    //if output isn't supposed to < 0 always returns 1
+
+    //we basically have a xored list of j1 j2 j3
+    And (a=gtcheck, b=zcheck, out=tmp1);
+    And (a=tmp1, b=ltcheck, out=jmp1);
+    //if we have a single 0 jump (jmp1=0)
+    Or (a=instruction[0], b=instruction[1], out=tmp2);
+    Or (a=tmp2, b=instruction[2], out=jmp2f);
+    Mux (a=false,b=jmp2f, sel=instruction[15], out=jmp2);
+    //if jmp2=0, dont jump; null instruction
+    Mux (a=true, b=false, sel=jmp1, out=jmpc);
+    Mux (a=false, b=jmpc, sel=jmp2, out=l);
+
+    //load pc value according to jump and reset values, given output of A register
+    PC (in=arego16, load=l, reset=reset, inc=true, out[0..14]=pc, out=pc16);
+}

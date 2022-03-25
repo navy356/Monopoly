@@ -1,0 +1,56 @@
+/** This class stores all info related to a given property as object*/
+
+class Deeds {
+
+	field int s_no;
+	field String name;
+	field int price;
+	field int rent;
+	field int mortgage;
+	field int owner;
+
+	constructor Deeds new(int s_no_supplied, String name_supplied, int price_supplied, int rent_supplied, int mortgage_supplied) {	/*construct new property deed*/
+		let s_no = s_no_supplied;
+		let name = name_supplied;
+		let price = price_supplied;
+		let rent = rent_supplied;
+		let mortgage = mortgage_supplied;
+		let owner = -1;
+		return this;
+	}
+
+	method void update_owner(int num){	/*update owner of given property -1 for unowned, 1 for player 1, 2 for player 2*/
+		let owner = num;
+		return;
+	}
+
+	method void dispose() {	/*dispose given property deed */
+		do Memory.deAlloc(this);
+		return;
+	}
+
+	method int get_s_no(){	/*get serial number of given property (1 to 11) */
+		return s_no;
+	}
+	
+	method String get_name(){	/*get name of given property */
+		return name;
+	}
+
+	method int get_price(){		/* get cost price of given property */
+		return price;
+	}
+
+	method int get_rent(){		/*get rent for given property */
+		return rent;
+	}
+
+	method int get_mortgage(){	/*get resale value for given property */
+		return mortgage;
+	}
+
+	method int get_owner(){		/*get owner for given property */
+		return owner;
+	}
+
+}

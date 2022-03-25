@@ -1,0 +1,56 @@
+/**This class contains functions for displaying various types of messages on the screen */
+
+class Msg {
+
+	function void flash_corner_msg(int line_no, int c_no, String msg){ /*Displays flash message on the bottom left corner (about 25 pixels high) of the panel 4 */
+		do Screen.setColor(false);
+		do Screen.drawRectangle(383, 220, 511, 255);
+		do Screen.setColor(true);	//clears the corner
+		do Msg.msg_string(line_no,c_no,msg);	//displays message at given location
+		do Sys.wait(800);
+		do Screen.setColor(false);
+		do Screen.drawRectangle(383, 220, 511, 255);
+		do Screen.setColor(true);	//clears the corner after an interval
+		return;
+	}
+
+	function void flash_msg(int line_no, int c_no, String msg, int amt){	/*Displays one-line flash message on panel 4 */
+		do Screen.setColor(false);
+		do Screen.drawRectangle(383, 100, 511, 255);
+		do Screen.setColor(true);	//clear the panel
+		do Msg.msg_string(line_no,c_no,msg);	//display string message at given location
+		if (~(amt = 0)){
+			do Output.printInt(amt);	//display integer amount if any
+		}
+		do Sys.wait(800);
+		do Menu.clear_panel4();	//clear panel after an interval
+		return;
+	}
+
+	function void flash_msg_multi(int line_no, int c_no, Array msg, int arr_len){	/*Displays multi-line flash message on panel 4 */
+		var int i;
+		var String line;
+		let i = 0;
+		do Screen.setColor(false);
+		do Screen.drawRectangle(383, 100, 511, 255);
+		do Screen.setColor(true);	//clears the panel
+		while (i < arr_len) {
+			let line = msg[i];
+			do Msg.msg_string(line_no,c_no,line);
+			let line_no = line_no + 2;
+			let i = i + 1;
+		}	//display messages in array one by one line by line
+		do msg.dispose();	//dispose array
+		do Sys.wait(1300);
+		do Menu.clear_panel4();	//clear panel after an interval
+		return;
+	}
+
+	function void msg_string(int l_no, int c_no, String msg){	/*Display message on string at given location */
+		do Output.moveCursor(l_no, c_no);	//move cursor to given location
+		do Output.printString(msg);		//print message
+		do msg.dispose();			//dispose given string
+		return;
+	}
+
+}

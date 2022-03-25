@@ -1,0 +1,40 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/PC.hdl
+
+/**
+ * A 16-bit counter with load and reset control bits.
+ * if      (reset[t] == 1) out[t+1] = 0
+ * else if (load[t] == 1)  out[t+1] = in[t]
+ * else if (inc[t] == 1)   out[t+1] = out[t] + 1  (integer addition)
+ * else                    out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16],load,inc,reset;
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    Inc16 (in[0]=t0, in[1]=t1, in[2]=t2, in[3]=t3, in[4]=t4, in[5]=t5, in[6]=t6, in[7]=t7, in[8]=t8, in[9]=t9, in[10]=t10, in[11]=t11, in[12]=t12, in[13]=t13, in[14]=t14, in[15]=t15, out=t);
+    Mux16 (a[0]=t0, a[1]=t1, a[2]=t2, a[3]=t3, a[4]=t4, a[5]=t5, a[6]=t6, a[7]=t7, a[8]=t8, a[9]=t9, a[10]=t10, a[11]=t11, a[12]=t12, a[13]=t13, a[14]=t14, a[15]=t15, b=t, sel=inc, out=tInc);
+    Mux16 (a=tInc, b=in, sel=load, out=tLoad);
+    Mux16 (a=tLoad, b=false, sel=reset, out[0]=tInc0, out[1]=tInc1, out[2]=tInc2, out[3]=tInc3, out[4]=tInc4, out[5]=tInc5, out[6]=tInc6, out[7]=tInc7, out[8]=tInc8, out[9]=tInc9, out[10]=tInc10, out[11]=tInc11, out[12]=tInc12, out[13]=tInc13, out[14]=tInc14, out[15]=tInc15);
+    DFF (in=tInc0, out=out[0], out=t0);
+    DFF (in=tInc1, out=out[1], out=t1);
+    DFF (in=tInc2, out=out[2], out=t2);
+    DFF (in=tInc3, out=out[3], out=t3);
+    DFF (in=tInc4, out=out[4], out=t4);
+    DFF (in=tInc5, out=out[5], out=t5);
+    DFF (in=tInc6, out=out[6], out=t6);
+    DFF (in=tInc7, out=out[7], out=t7);
+    DFF (in=tInc8, out=out[8], out=t8);
+    DFF (in=tInc9, out=out[9], out=t9);
+    DFF (in=tInc10, out=out[10], out=t10);
+    DFF (in=tInc11, out=out[11], out=t11);
+    DFF (in=tInc12, out=out[12], out=t12);
+    DFF (in=tInc13, out=out[13], out=t13);
+    DFF (in=tInc14, out=out[14], out=t14);
+    DFF (in=tInc15, out=out[15], out=t15);
+}

@@ -1,0 +1,188 @@
+/**This class controls all info shows on the panel on each side of the board.
+Upper right is panel 1
+Bottom right is panel 2
+Upper left is panel 3
+Bottom left is panel 4*/
+
+
+class Menu{
+	
+	static Deeds deed;
+	static int property_tile;
+	static Array properties;
+	static Array chest;
+	static Array chance;
+
+	function void init(){
+	/*set default values and show default info */
+		do Menu.print_menu();
+		do Menu.init_properties();
+		let chest = Array.new(2);
+		let chest[0] = 0;
+		let chest[1] = 0;
+		let chance = Array.new(2);
+		let chance[0] = 0;
+		let chance[1] = 0;
+		return;
+	}
+
+	function void print_menu(){	/*print Main control menu (PANEL 3) */
+		do Msg.msg_string(1,54,"MENU");
+		do Msg.msg_string(3,49,"[R]oll Dice");
+		do Msg.msg_string(4,49,"[B]uy");
+		do Msg.msg_string(5,49,"[H]elp");
+		do Msg.msg_string(6,49,"[V]iew Deeds");
+		do Msg.msg_string(7,49,"[E]nd turn");
+		do Msg.msg_string(8,49,"[Q]uit");
+		return;
+	}
+
+	function void refresh_info_1(int current_player) {	/*refresh info for given player (1 for player 1, 2 for player 2) */
+		if (current_player = 1) {
+			do Menu.clear_panel1();	//clear panel 1
+			do Gameplay.player1_info();	//show player info
+		}
+		else {
+			do Menu.clear_panel2();	//clear panel 2
+			do Gameplay.player2_info();	//show player info
+		}
+		return;
+	}
+
+	function void refresh_info_2(){	/*refresh info for both players */
+		do Menu.clear_panel1();	
+		do Menu.clear_panel2();	//clear panel 1 and 2
+		do Gameplay.players_info();	//show updated info
+		return;	
+	}
+
+	function void clear_panel4(){	/* clear panel 4 and show info related to current tile if any */
+		do Screen.setColor(false);
+		do Screen.drawRectangle(383, 100, 511, 255);
+		do Screen.setColor(true);	//clear panel 4
+		if (property_tile > 0){	//if there is some info for current tile
+			if (property_tile < 12) {	//if it is a property
+				do Menu.view_deed(property_tile);	//show title deed
+			}
+			else { if(property_tile = 13) {	//if chest
+				do Menu.view_chest(chest[0], chest[1]);	//show chest card
+				}
+			else{	//if chance
+				do Menu.view_chance(chance[0], chance[1]);	//show chance card
+			}}
+		}
+		return;
+	}
+
+	function void clear_panel1(){	/*clear panel 1*/
+		do Screen.setColor(false);
+		do Screen.drawRectangle(1,1,125,126);
+		do Screen.setColor(true);
+		return;
+	}
+
+	function void clear_panel2(){	/*clear panel 2 */
+		do Screen.setColor(false);
+		do Screen.drawRectangle(1,128,125,254);
+		do Screen.setColor(true);
+		return;
+	}
+
+	function void deed_boundary(){	/*draw boundary for title deeds */
+		do Shapes.rect(383, 105, 511, 255);
+		return;
+	}
+
+	function void view_deed(int s_no){	/*display given title deed */
+		var String name;
+		var int price, rent, mortgage, owner;
+		do Menu.deed_boundary();
+		let deed = properties[s_no - 1];
+		let name = deed.get_name();
+		let price = deed.get_price();
+		let rent = deed.get_rent();
+		let mortgage = deed.get_mortgage();
+		let owner = deed.get_owner();	//get info for given title deed
+		do Output.moveCursor(11, 50);
+		do Output.printString(name);
+		do Msg.msg_string(14,48," Price: $");
+		do Output.printInt(price);
+		do Msg.msg_string(16,48," Rent: $");
+		do Output.printInt(rent);
+		do Msg.msg_string(18,48," Resale: $");
+		do Output.printInt(mortgage);
+		do Output.moveCursor(20, 48);
+		if (owner = (-1)){
+			do Msg.msg_string(20,48," Owner: unowned");
+		}
+		else{
+			do Msg.msg_string(20,48," Owner: player");
+			do Output.printInt(owner);
+		}
+		return;
+	}
+
+	function void card_boundary(){	/* draw boundary for chance and chest cards */
+		do Shapes.rect(383, 144, 511, 195);
+		return;
+	}
+
+	function void view_chest(int amt, int loss_or_gain)	/* print Chest card */
+	{
+		do Menu.card_boundary();	//draw card boundary
+		do Msg.msg_string(14,48,"      Chest");
+		if (loss_or_gain = 0){
+			do Msg.msg_string(16,48,"  You lose $ ");
+			do Output.printInt(amt);
+		}
+		else{
+			do Msg.msg_string(16,48,"  You win $ ");
+			do Output.printInt(amt);
+		}
+		return;
+	}
+
+	function void view_chance(int amt, int loss_or_gain)	/*print Chance card */
+	{
+		do Menu.card_boundary();	//draw card boundary
+		do Msg.msg_string(14,48,"      Chance");
+		if (loss_or_gain = 0){
+			do Msg.msg_string(16,48," Move back by ");
+			do Output.printInt(amt);
+		}
+		else{
+			do Msg.msg_string(16,48," Move ahead by ");
+			do Output.printInt(amt);
+		}
+		do Msg.msg_string(20,48,"Press enter...");
+		return;
+	}
+
+	function void update_chest(int amt, int loss_or_gain){	/* update chest card details*/
+		let chest[0] = amt;	//amt of money lost or gained
+		let chest[1] = loss_or_gain;	//loss or gain
+		return;
+	}
+
+	function void update_chance(int amt, int loss_or_gain){	/* update chance card details */
+		let chance[0] = amt;	//amt of steps forward or backward
+		let chance[1] = loss_or_gain;	//backward or forward
+		return;
+	}
+
+
+	function void update_ptile(int s_no){	/*update current tile current player is on : 0 for nothing special, 1 to 11 for properties, 12 for chance and 13 for chest */ 
+		let property_tile = s_no;
+		return;
+	}
+
+	function void init_properties(){	/* get array of property title deeds */
+		let properties = Gameplay.get_properties();
+		return;
+	}
+
+	function int get_s_no(){	/* return current tile */
+		return property_tile;
+	}
+
+}

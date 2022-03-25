@@ -1,0 +1,44 @@
+/**This class has functions to draw useful shapes */
+
+class Shapes {
+		
+	function void rect(int x1, int y1, int x2, int y2) {
+	/* draws a non-filled rectangle starting at (x1, y1) as top right corner and (x2, y2)
+	as bottom left corner */
+	do Screen.drawLine(x1, y1, x1, y2);
+	do Screen.drawLine(x1, y1, x2, y1);
+	do Screen.drawLine(x2, y1, x2, y2);
+	do Screen.drawLine(x1, y2, x2, y2);
+	return;
+	}
+
+	function void dice_dots(int x1, int y1) {
+	/*draws a 2x2 pixel filled square on dice at given position */
+	do Screen.drawRectangle(x1, y1, x1 + 2, y1 + 2);
+	return;
+	}
+
+	function void token1(int x1, int y1) {
+	/*draw circle with number 1 on it at given position */
+	do Screen.drawCircle(x1, y1, 10);
+	do Screen.setColor(false);
+	do Screen.drawRectangle(x1 - 1, y1 - 4, x1+1, y1 + 4);
+	do Screen.drawRectangle(x1 - 3, y1 - 4, x1 - 1, y1 - 3);
+	do Screen.setColor(true);
+	return;
+	}
+
+	function void token2(int x1, int y1) {
+	/*draws circle with number 2 on it at given position */
+	do Screen.drawCircle(x1, y1, 10);
+	do Screen.setColor(false);
+	do Screen.drawRectangle(x1 - 4, y1 - 5, x1 + 4, y1 - 4);
+	do Screen.drawRectangle(x1 - 4, y1 + 5, x1 + 4, y1 + 6);
+	do Screen.drawRectangle(x1 - 4, y1, x1 + 4, y1 + 1);
+	do Screen.drawRectangle(x1 + 3, y1 - 5, x1 + 4, y1);
+	do Screen.drawRectangle(x1 - 4, y1, x1 - 3, y1 + 6);
+	do Screen.setColor(true);
+	return;
+	}
+
+}

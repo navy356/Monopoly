@@ -1,0 +1,64 @@
+function Deeds.new 0
+push constant 6
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 0
+push argument 1
+pop this 1
+push argument 2
+pop this 2
+push argument 3
+pop this 3
+push argument 4
+pop this 4
+push constant 1
+neg
+pop this 5
+push pointer 0
+return
+function Deeds.update_owner 0
+push argument 0
+pop pointer 0
+push argument 1
+pop this 5
+push constant 0
+return
+function Deeds.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return
+function Deeds.get_s_no 0
+push argument 0
+pop pointer 0
+push this 0
+return
+function Deeds.get_name 0
+push argument 0
+pop pointer 0
+push this 1
+return
+function Deeds.get_price 0
+push argument 0
+pop pointer 0
+push this 2
+return
+function Deeds.get_rent 0
+push argument 0
+pop pointer 0
+push this 3
+return
+function Deeds.get_mortgage 0
+push argument 0
+pop pointer 0
+push this 4
+return
+function Deeds.get_owner 0
+push argument 0
+pop pointer 0
+push this 5
+return

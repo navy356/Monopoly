@@ -1,0 +1,87 @@
+/** This is the Main class which starts the program, calling the required functions */
+
+class Main {
+	
+	static int loser;	
+	
+	function void update_loser(int player) {	/**bankruptcy clause : if a loser is set, game ends */
+		let loser = player;
+		return;
+	}
+
+	function void main() {		/**main function to start the game */
+	var char key, last_key;
+	var boolean quit;
+	do Utils.init();
+	do Board.init();
+	do Gameplay.init();
+	do Menu.init();		//initialises all settings
+	let quit = false;
+	let last_key = 0;
+	let loser = 0;
+
+	while(~quit) {	//until user quits or someone loses
+		let key = Keyboard.keyPressed();
+		if(~(key = last_key)) {	//if key pressed is not same as last key (to avoid messages from having to load again)
+			if (key = 0) {	//if no key is pressed
+				let last_key = key;
+			}
+
+			if (key = 82) {	//R
+				let last_key = key;
+				do Gameplay.roll_n_move();
+			}
+
+			else { if (key = 69) {	//E
+				let last_key = key;
+				do Gameplay.end_turn();
+				}
+			else { if (key = 66) {	//B
+				let last_key = key;
+				do Gameplay.property();
+				}
+			else { if (key = 86) {	//V
+				let last_key = key;
+				do Gameplay.view_all();
+				}
+			else { if (key = 49) {	//1
+				let last_key = key;
+				do Gameplay.view_sell_p1();
+				}
+			else { if (key = 50) {	//2
+				let last_key = key;
+				do Gameplay.view_sell_p2();
+				}
+			else{ if (key = 72) {	//H
+				let last_key = key;
+				do Rules.show();
+				}
+			else{ if (key = 81) {	//Q
+				let last_key = key;
+				let quit = true;
+				}
+			}}}}}}}
+			if (~(loser = 0)) {	//if someone loses
+				let quit = true;//quit
+			}
+		}
+	}
+
+	if (~(loser = 0)){	//if someone lost
+		do Screen.clearScreen();
+		if (loser = 1){	//Show appropriate winner
+			do Msg.msg_string(10,20,"Player 2 wins");
+		}
+		else{
+			do Msg.msg_string(10,20,"Player 1 wins");
+		}
+		do Msg.msg_string(12,20,"Press enter...");
+		do Input.prompt_enter();
+	}
+
+	do Screen.clearScreen();
+	do Msg.msg_string(10,20,"Thanks for playing");
+			
+	return;
+	}
+}

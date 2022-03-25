@@ -1,0 +1,162 @@
+function Shapes.rect 0
+push argument 0
+push argument 1
+push argument 0
+push argument 3
+call Screen.drawLine 4
+pop temp 0
+push argument 0
+push argument 1
+push argument 2
+push argument 1
+call Screen.drawLine 4
+pop temp 0
+push argument 2
+push argument 1
+push argument 2
+push argument 3
+call Screen.drawLine 4
+pop temp 0
+push argument 0
+push argument 3
+push argument 2
+push argument 3
+call Screen.drawLine 4
+pop temp 0
+push constant 0
+return
+function Shapes.dice_dots 0
+push argument 0
+push argument 1
+push argument 0
+push constant 2
+add
+push argument 1
+push constant 2
+add
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+return
+function Shapes.token1 0
+push argument 0
+push argument 1
+push constant 10
+call Screen.drawCircle 3
+pop temp 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push argument 0
+push constant 1
+sub
+push argument 1
+push constant 4
+sub
+push argument 0
+push constant 1
+add
+push argument 1
+push constant 4
+add
+call Screen.drawRectangle 4
+pop temp 0
+push argument 0
+push constant 3
+sub
+push argument 1
+push constant 4
+sub
+push argument 0
+push constant 1
+sub
+push argument 1
+push constant 3
+sub
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push constant 0
+return
+function Shapes.token2 0
+push argument 0
+push argument 1
+push constant 10
+call Screen.drawCircle 3
+pop temp 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push argument 0
+push constant 4
+sub
+push argument 1
+push constant 5
+sub
+push argument 0
+push constant 4
+add
+push argument 1
+push constant 4
+sub
+call Screen.drawRectangle 4
+pop temp 0
+push argument 0
+push constant 4
+sub
+push argument 1
+push constant 5
+add
+push argument 0
+push constant 4
+add
+push argument 1
+push constant 6
+add
+call Screen.drawRectangle 4
+pop temp 0
+push argument 0
+push constant 4
+sub
+push argument 1
+push argument 0
+push constant 4
+add
+push argument 1
+push constant 1
+add
+call Screen.drawRectangle 4
+pop temp 0
+push argument 0
+push constant 3
+add
+push argument 1
+push constant 5
+sub
+push argument 0
+push constant 4
+add
+push argument 1
+call Screen.drawRectangle 4
+pop temp 0
+push argument 0
+push constant 4
+sub
+push argument 1
+push argument 0
+push constant 3
+sub
+push argument 1
+push constant 6
+add
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push constant 0
+return

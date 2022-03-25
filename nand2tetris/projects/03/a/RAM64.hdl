@@ -1,0 +1,29 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/RAM64.hdl
+
+/**
+ * Memory of 64 ramisters, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then 
+ * the in value is loaded into the memory location specified by address 
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM64 {
+    IN in[16], load, address[6];
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    DMux8Way (in=load, sel=address[3..5], a=raml0, b=raml1, c=raml2, d=raml3, e=raml4, f=raml5, g=raml6, h=raml7);
+    RAM8 (in=in, load=raml0, address=address[0..2], out=ramo0);
+    RAM8 (in=in, load=raml1, address=address[0..2], out=ramo1);
+    RAM8 (in=in, load=raml2, address=address[0..2], out=ramo2);
+    RAM8 (in=in, load=raml3, address=address[0..2], out=ramo3);
+    RAM8 (in=in, load=raml4, address=address[0..2], out=ramo4);
+    RAM8 (in=in, load=raml5, address=address[0..2], out=ramo5);
+    RAM8 (in=in, load=raml6, address=address[0..2], out=ramo6);
+    RAM8 (in=in, load=raml7, address=address[0..2], out=ramo7);
+    Mux8Way16 (a=ramo0, b=ramo1, c=ramo2, d=ramo3, e=ramo4, f=ramo5, g=ramo6, h=ramo7, sel=address[3..5], out=out);
+}

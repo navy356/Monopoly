@@ -1,0 +1,61 @@
+/**This class contains useful mathematic functions */
+
+class Utils {
+
+	static int seed;
+	static int m;
+	static int a;
+	
+	function void set_a_m() {	/*set value of a and m for random number generator */
+		let m = 2039;
+		let a = 328;
+		return;
+	}
+
+	function void init() {		/*get seed value for rng */
+		var char key;
+		var boolean key_pressed;
+		let key_pressed = false;
+		let seed = 3;
+		do Utils.set_a_m();
+		do Output.printString("Please press any key to start...");
+		while (~key_pressed) {
+			if (seed > 32766) {
+				let seed = 2;
+			}
+			let seed = seed + 1;
+			let key = Keyboard.keyPressed();
+			if (~(key = 0)) {
+				let key_pressed = true;
+				
+			}
+		}
+		do Screen.clearScreen();
+		return;	
+	}
+
+	function int rand() {	/*simple LCG pseudo random code generator */
+		let seed = Utils.modulo(a*seed, m);
+		if (seed < 0) {
+			let seed = seed + m;
+		}
+		return seed;
+	}
+
+
+	function int modulo(int x, int m) {
+	/* returns x mod m */
+		return (x - (m * (x/m)));
+	}
+
+	function int rand_range(int low, int high) {
+	/* returns random number in given range [low, high] */
+		var int scale, rand;
+		let scale = m / (high - low + 1);
+		let rand = (Utils.rand() / scale) + low;
+		while (rand > high) {
+			let rand = (Utils.rand() / scale) + low;
+		}
+		return rand;
+	}
+}

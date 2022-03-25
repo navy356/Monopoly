@@ -1,0 +1,35 @@
+class Rules {
+
+	function void show() {
+
+	do Screen.clearScreen();	//clear screen
+	do Msg.msg_string(1,31,"Rules");
+	do Msg.msg_string(3,1,"1. Railroads are treated as normal properties");
+	do Msg.msg_string(4,1,"2. Chance moves you forward or back a random number of steps");
+	do Msg.msg_string(5,1,"3. Chest makes you lose or gain a random amount of moeny");
+	do Msg.msg_string(6,1,"4. There is no extra turn for double roll");
+	do Msg.msg_string(7,1,"5. If you pass go, collect $100");
+	do Msg.msg_string(8,1,"6. Income tax is $100");
+	do Msg.msg_string(9,1,"7. You can collect rent while in jail");
+	do Msg.msg_string(11,1,"Note - There are help messages if you are stuck");
+	do Msg.msg_string(12,1,"during input. Press H (or any wrong key) and it");
+	do Msg.msg_string(13,1," should show");
+	do Msg.msg_string(16,1,"Press enter to return...");
+	do Input.prompt_enter();	//prompt to return to game
+
+
+	do Screen.clearScreen();	//clear screen again
+	do Board.draw_logo();
+	do Board.reset();
+	do Board.draw_dice();
+	do Board.draw_dice_num(4,1);
+	do Board.draw_dice_num(2,2);
+	do Menu.refresh_info_2();
+	do Menu.clear_panel4();
+	do Menu.print_menu();
+	do Gameplay.set_current();	//restore game
+	return;
+	}
+
+
+}

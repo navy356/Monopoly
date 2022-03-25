@@ -1,0 +1,1025 @@
+/** This class contains functions required for all the game logic. Eg : Moving, buying, selling, etc. */
+
+
+class Gameplay {
+	
+	static Players p1;
+	static Players p2;	
+	static int current_player;
+	static boolean rolled;
+	static Array properties;
+	static Deeds deed;
+	static boolean rent_paid;
+	static boolean debt_paid;
+	static int debt;
+	static int rent;
+
+	function void init() {
+	/* Set all default values to start the game off */
+		do Gameplay.create_players();
+		do Gameplay.players_info();
+		let current_player = 1;
+		do Gameplay.set_current();
+		do Gameplay.build_properties();
+		let rolled = false;
+		let debt_paid = true;
+		let rent_paid = true;
+		let debt = 0;
+		let rent = 0;
+		return;
+	}
+
+	function void check() {
+	/* Check what kind of tile the current player is on and call the related function.
+		Eg : If on chance, call chance etc.
+	*/
+		var int pos, option, seg, s_no, owner;
+		let s_no = 0;
+		/* get the current position of current player */
+		if (current_player = 1){
+			let pos = p1.get_pos();
+		}
+		else{
+			let pos = p2.get_pos();
+		}
+		/* the game board is divided into 24 tiles from 0 to 23
+			each segment, meaning each row or column has 7 tiles from 0 - 6
+			which are distributed so 0 and 6 are two corners
+			2 and 4 are chance and chest respectively
+			and 1,3,5 are property tiles except for 23 (last segment - 5th tile)
+			which is income tax */
+		let option = Utils.modulo(pos, 6);
+		//get the tile relative to given segment
+		if (option = 2){	//chance tile
+			do Menu.update_ptile(s_no);	//clears default display for panel 4
+			do Gameplay.chance();
+		}
+		else{ if (option = 4){	//chest tile
+			do Menu.update_ptile(s_no);	//clears default display for panel 4
+			do Gameplay.chest();
+		}
+		else{if (~(option = 0)){	//property tiles except 23
+			if (pos = 23){	//income tax
+				do Menu.update_ptile(s_no);	//clears default display for panel 4
+				do Gameplay.tax();
+			}
+			else {	//property tile
+				let seg = Utils.modulo(pos, 6);	//gets tile relative to current segment
+				/* Now, 1,3,5 are property tiles in each segment
+					so 1 is the 1st, 3 is the 2nd and 5 is the 3rd property in that segment.
+				*/
+				if (seg = 3){
+					let seg = 2;
+				}
+				else{ if (seg = 5){
+					let seg = 3;
+				}}	//sets the property number for that segment
+				/*there are 3 properties per segment except the last one.
+					pos/6 give the current segment, which multipled by 3
+					gives the last property for that segment.
+					that plus seg which holds the property no for the 
+					current segment gives the property serial number.
+				*/
+				let s_no = (((pos/6)*3) + seg);
+				do Menu.update_ptile(s_no);	//update panel 4 to show title deed as default view
+				do Menu.clear_panel4();
+				let deed = properties[s_no - 1];	//get the title deed object from the array properties
+				let owner = deed.get_owner();
+				if (~(owner = -1)){	//if owned
+					if (~(owner = current_player)){	//if not owned by current player
+						do Sys.wait(700);
+						let rent_paid = false;	//sets rent to not paid yet
+						do Gameplay.property();
+					}
+				}
+				else {	//if unowned
+					do Sys.wait(300);
+					do Msg.flash_msg(16,48,"Enter B to buy",0);
+				}
+			}
+		}
+		else{	//if one of the 4 corners
+			do Menu.update_ptile(s_no);	//clears panel 4 default view
+			if (pos = 18){	//jail corner
+			do Gameplay.jail();
+		}}}}
+		return;
+	} 
+
+	function void tax(){	/*income tax*/
+		var int money;
+		if (current_player = 1){
+			let money = p1.get_money();
+			if (money < 100) {	//if current player doesn't have enough money
+				let debt_paid = false;	//set debt to not paid
+				let debt = debt + 100;	//add 100 (income tax) to debt amount
+		/* The debt will be checked when the player ends turn. */
+				do Msg.flash_msg(16,48," Low cash",0);
+				return;
+			}
+			do p1.pay(100);
+		}
+		else {
+			let money = p2.get_money();
+			if (money < 100) {	//if current player doesn't have enough money
+				let debt_paid = false;	//set debt to not paid
+				let debt = debt + 100;	//add 100 (income tax) to debt amount
+				do Msg.flash_msg(16,48," Low cash",0);
+				return;
+			}
+			do p2.pay(100);
+		}
+		do Msg.flash_msg(16,48," Income Tax -100",0);
+		do Menu.refresh_info_1(current_player);	//update player info
+		return;
+	}
+	
+
+	function void property(){	/*property tile*/
+		var boolean buy;
+		var int s_no, owner, price, money;
+		let s_no = Menu.get_s_no();
+		if (s_no = 0){	//if player is not on a property tile, they get this message
+			do Msg.flash_msg(16,48," Nothing to buy",0);
+		}
+		else{	//if player is on a property tile
+		let deed = properties[s_no - 1];	//get deed object from array of properties
+		let owner = deed.get_owner();
+		if (owner = (-1)){	//if unowned
+			do Menu.update_ptile(0);	//clear default view which should be title deed of current property
+			do Menu.clear_panel4();	
+			do Msg.msg_string(16,48," Buy? (y/n)");
+			let buy = Input.prompt_y_n();	//prompt to buy
+			do Menu.update_ptile(s_no);	//restore default view which should be title deed of current property
+			if (buy) {	//if player says yes
+				let price = deed.get_price();
+				if (current_player = 1){
+					let money = p1.get_money();
+					if (money < price) {	//not enough money
+						do Msg.flash_msg(16,48," Low cash",0);
+					}
+					else {
+						do p1.pay(price);	//deducts money from player
+						do p1.buy(s_no);	//adds property to player's list of owned properties
+						do deed.update_owner(1);	//updates deed owner
+						do Msg.flash_msg(16,48," You bought it!",0);
+						do Menu.refresh_info_1(current_player);
+					}
+				}
+				else {
+					let money = p2.get_money();
+					if (money < price) {	//not enough money
+						do Msg.flash_msg(16,48," Low cash",0);
+					}
+					else {
+						do p2.pay(price);	//deducts money from player
+						do p2.buy(s_no);	//adds property to player's list of owned properties
+						do deed.update_owner(2);	//updates deed owner
+						do Msg.flash_msg(16,48," You bought it!",0);
+						do Menu.refresh_info_1(current_player);
+					}
+				}
+			}
+		}
+		else{ if (~(owner = current_player)) {	//if property is owned by the other player
+				if(~rent_paid){	//if rent not paid
+				/*rent is a static variable so it will be saved in case the player can't pay it without selling properties */
+				let rent = deed.get_rent();
+				if (current_player = 2) {
+					let money = p2.get_money();
+					if (money < rent) {	//not enough money, rent stays unpaid
+						do Msg.flash_msg(16,48, " Low cash",0);
+					}
+					else {
+						do p2.pay(rent);
+						do p1.collect(rent);
+						do Msg.flash_msg(16,48," Rent paid -",rent);
+						let rent_paid = true;	//rent is paid
+						do Menu.refresh_info_2();
+					}
+				}
+				else {
+					let money = p1.get_money();
+					if (money < rent) {	//not enough money, rent stays unpaid
+						do Msg.flash_msg(16,48, " Low cash",0);
+					}
+					else {
+						do p1.pay(rent);
+						do p2.collect(rent);
+						do Msg.flash_msg(16,48," Rent paid -",rent);	
+						let rent_paid = true;	//rent is paid
+						do Menu.refresh_info_2();
+					}
+				}}
+				else{
+					do Msg.flash_msg(16,48," Rent paid :)",rent);
+				}
+			}
+		else{
+			do Msg.flash_msg(16,48," You own it",0);
+		}}
+		do Menu.clear_panel4();	//clears default view for panel 4
+		}
+		return;
+	}
+
+	function boolean jail(){	/*jail tile (invoked if player lands on go to jail or rolls dice when jailed)*/
+		var boolean status, ans;
+		var int jail_turns, old_s_no, money;
+		//get the current status of the current player (jailed or not jailed)
+		if (current_player = 1){
+			let status = p1.jail_status();
+		}
+		else {
+			let status = p2.jail_status();
+		}
+		if (~status){	//if not jailed
+			do Msg.flash_msg(16,48, " Go to Jail",0);
+			do Sys.wait(500);
+			do Gameplay.move(12, true);	//move to jail, not collecting go money (jailed = true)
+			if (current_player = 1){
+				do p1.update_jail(true);	//set status to jailed
+				do Menu.refresh_info_1(1);	//update player info
+			}
+			else {
+				do p2.update_jail(true);	//set status to jailed
+				do Menu.refresh_info_1(2);	//update player info
+			}
+		}
+		else{	//if jailed
+			// Get number of turns player has been in jail
+			if (current_player = 1){
+				let jail_turns = p1.get_jail_turns();
+			}
+			else {
+				let jail_turns = p2.get_jail_turns();
+			}
+			if (jail_turns < 3){
+				let old_s_no = Menu.get_s_no();	//preserves settings for default view
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();
+				do Msg.msg_string(16,48," You are jailed");
+				do Msg.msg_string(17,48," Turns left = ");
+				do Output.printInt(3 - jail_turns);	//displayes turns left in jail
+				do Msg.msg_string(18,48," Pay $50? (Y/N)");
+				let ans = Input.prompt_y_n();	//prompt user to pay
+				do Menu.update_ptile(old_s_no);
+				if (ans) {	//if user wants to pay
+					if (current_player = 1) {
+						let money = p1.get_money();
+						if (money < 50) {	//not enough money
+							do Msg.flash_msg(16,48," Low cash",0);
+							return true;
+						}
+						do p1.update_jail_turns(0);	//resets number of turns in jail
+						do p1.update_jail(false);	//resets status to not jailed
+						do Menu.refresh_info_1(1);	//updates player info
+					}
+					else{
+						let money = p2.get_money();
+						if (money < 50) {	//not enough money
+							do Msg.flash_msg(16,48," Low cash",0);
+							return true;
+						}
+						do p2.update_jail_turns(0);	//resets number of turns in jail
+						do p2.update_jail(false);	//resets status to not jailed
+						do Menu.refresh_info_1(2);	//updates player info
+					}
+					do Msg.flash_msg(16,48," You are free!",0);
+					return false;
+				}
+				else {		//if user doesn't want to pay
+					do Msg.flash_msg(16,48," You can't move",0);
+					if (current_player = 1) {
+						do p1.update_jail_turns(jail_turns + 1);	//increment jail turns
+					}
+					else{
+						do p2.update_jail_turns(jail_turns + 1);	//increment jail turns
+					}
+					return true;
+				}
+			}
+			else {	//if user finished 3 turns in jail
+				if (current_player = 1) {
+					do p1.update_jail_turns(0);	//resets number of turns in jail
+					do p1.update_jail(false);	//resets status to not jailed
+					do Menu.refresh_info_1(1);	//updates player info
+				}
+				else {
+					do p2.update_jail_turns(0);	//resets number of turns in jail
+					do p2.update_jail(false);	//resets status to not jailed
+					do Menu.refresh_info_1(2);	//updates player info
+				}
+				return false;
+			}
+				
+		}
+		return true;
+	}
+			
+		
+
+	function void chance(){	/*chance tile*/
+		var int steps, loss_gain, money;
+		let steps = Utils.rand_range(1,3);	//get a random number of steps to move
+		let loss_gain = Utils.rand_range(0,1);	//get a random number to decide whether to move ahead or behind
+		if (loss_gain = 0)	//if move behind
+		{
+			do Menu.update_chance(steps, loss_gain);
+			do Menu.update_ptile(14);	//set default view to chance card
+			do Menu.clear_panel4();
+			do Input.prompt_enter();	//prompt user to press enter after looking at card
+			do Gameplay.move(-steps,false);		//move user to required tile
+		}
+		else	//if move ahead
+		{
+			do Menu.update_chance(steps, loss_gain);
+			do Menu.update_ptile(14);	//set default view to chance card
+			do Menu.clear_panel4();
+			do Input.prompt_enter();	//prompt user to press enter after looking at card
+			do Gameplay.move(steps,false);		//move user to required tile
+		}
+		return;
+	}
+
+	function void chest() {	/*chest tile*/
+		var int amt, loss_gain, money;
+		let amt = Utils.rand_range(1,10) * 10;	//get a random amount of money to gain or deduct
+		let loss_gain = Utils.rand_range(0,1);	//get random number to decide whether to gain or deduct
+		if (loss_gain = 0)	//if deduct
+		{
+			do Msg.flash_msg(16,48," You lose $ ",amt);
+			if (current_player = 1){
+				let money = p1.get_money();
+				if (money < amt) {	//not enough money
+					do Msg.flash_msg(16,48,"Low cash",amt);
+					let debt_paid = false;	//set debt
+					let debt = debt + amt;	//add amount to debt
+					return;
+				}
+				do p1.pay(amt);
+			}
+			else {
+				let money = p2.get_money();
+				if (money < amt) {	//not enough money
+					do Msg.flash_msg(16,48,"Low cash",amt);
+					let debt_paid = false;	//set debt
+					let debt = debt + amt;	//add amount to debt
+					return;
+				}
+				do p2.pay(amt);
+			}
+		}
+		else	//if gain
+		{
+			do Msg.flash_msg(16,48," You won $ ",amt);
+			if (current_player = 1){
+				do p1.collect(amt);	//collect money
+			}
+			else {
+				do p2.collect(amt);	//collect money
+			}
+		}
+		do Menu.refresh_info_1(current_player);	//update player info
+		do Menu.update_chest(amt, loss_gain);
+		do Menu.update_ptile(13);
+		do Menu.clear_panel4();//set default view to chest card
+		return;
+	}
+
+	function void go_collect(){	/*go tile (invoked on passing go tile with jailed = false*/
+		if (current_player = 1){
+			do p1.collect(100);	//collect money
+		}
+		else {
+			do p2.collect(100);	//collect money
+		}
+		do Msg.flash_msg(16,48," Passed Go +100",0);
+		do Menu.refresh_info_1(current_player);		//update player info
+		return;
+		
+	}
+
+	function void end_turn() {	/*end turn (checks for debt and if player rolled the dice and switches player)*/
+		var Array msg;
+		var int money, old_s_no;
+		var boolean flag;
+		if (~rolled) {	//if player did not roll the dice this turn
+			do Msg.flash_msg(16,48," Please roll",0);
+		}
+		else { if (~rent_paid) {	//if player did not pay rent yet
+			if (current_player = 1){
+				let money = p1.get_money();
+			}
+			else {
+				let money = p2.get_money();
+			}
+			if (money < rent) {	//if player doesn't have enough money
+				let old_s_no = Menu.get_s_no();
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();//reset default view to display message 
+				do Msg.msg_string(11,48," You have rent");
+				do Msg.msg_string(12,48,"  left to pay");
+				do Msg.msg_string(13,48," Amount: ");
+				do Output.printInt(rent);
+				do Msg.msg_string(14,48," Try selling");
+				do Msg.msg_string(16,48," Enter (y/n)");
+				do Msg.msg_string(17,48," y - Try selling");
+				do Msg.msg_string(18,48," n - Lose");
+				let flag = Input.prompt_y_n();	//prompt user to try selling or quit
+				if (flag) {	//if user wants to try selling
+					do Menu.update_ptile(old_s_no);
+					do Menu.clear_panel4();	//restore view
+					return;
+				}
+				else {	//if user quits
+					do Main.update_loser(current_player);	//update bankruptcy case to set loser to current player
+					return;
+				}}
+			else {	//if player does have enough money
+				let old_s_no = Menu.get_s_no();
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();//reset default view to display message 
+				do Msg.msg_string(11,48," You have rent");
+				do Msg.msg_string(12,48,"  left to pay");
+				do Msg.msg_string(13,48," Amount: ");
+				do Output.printInt(rent);
+				do Msg.msg_string(14,48," You have enough");
+				do Msg.msg_string(15,48,"     cash");
+				do Msg.msg_string(16,48," Enter (y/n)");
+				do Msg.msg_string(17,48," y - pay");
+				do Msg.msg_string(18,48," n - no");	//prompt user to pay or not end turn
+				let flag = Input.prompt_y_n();
+				if (flag) {	//if player wants to pay
+					do Menu.update_ptile(old_s_no);
+					do Menu.clear_panel4();	//restore view
+					do Gameplay.property();	//pay rent
+					do Msg.flash_msg(16, 48, " Hit E again", 0);	//ask user to end turn again
+					return;
+				}
+				else {	//if player doesn;t want to pay
+					do Msg.msg_string(16, 48, " You cannot end");
+					do Msg.msg_string(17, 48, "     turn");	//player cannot end turn
+					do Menu.update_ptile(old_s_no);
+					do Sys.wait(700);
+					do Menu.clear_panel4();	//restore default view
+					return;
+				}
+			}}
+		else { if (~debt_paid) {	//if player has unpaid debt
+			if (current_player = 1){
+				let money = p1.get_money();
+			}
+			else {
+				let money = p2.get_money();
+			}
+			if (money < debt) {	//if player doesn't have enough money
+				let old_s_no = Menu.get_s_no();
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();	//clear default view to display msg
+				do Msg.msg_string(11,48," You have debt");
+				do Msg.msg_string(12,48,"  left to pay");
+				do Msg.msg_string(13,48," Amount: ");
+				do Output.printInt(rent);
+				do Msg.msg_string(14,48," Try selling");
+				do Msg.msg_string(16,48," Enter (y/n)");
+				do Msg.msg_string(17,48," y - Try selling");
+				do Msg.msg_string(18,48," n - Lose");
+				let flag = Input.prompt_y_n();	//prompt user to try selling or quit
+				if (flag) {	//if player wants to try selling
+					do Menu.update_ptile(old_s_no);
+					do Menu.clear_panel4();//restore view
+					return;
+				}
+				else {	//if player wants to quit
+					do Main.update_loser(current_player);	//update bankruptcy case to set loser to current player
+					return;
+				}}
+			else {	//if player has enough money
+				let old_s_no = Menu.get_s_no();
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();
+				do Msg.msg_string(11,48," You have debt");
+				do Msg.msg_string(12,48,"  left to pay");
+				do Msg.msg_string(13,48," Amount: ");
+				do Output.printInt(rent);
+				do Msg.msg_string(14,48," You have enough");
+				do Msg.msg_string(15,48,"     cash");
+				do Msg.msg_string(16,48," Enter (y/n)");
+				do Msg.msg_string(17,48," y - pay");
+				do Msg.msg_string(18,48," n - no");
+				let flag = Input.prompt_y_n();	//prompt user to pay or not end turn
+				if (flag) {	//if player wants to pay
+					let debt_paid = true;
+					do Menu.update_ptile(old_s_no);
+					do Menu.clear_panel4();	//restore view
+					if (current_player = 1){
+						do p1.pay(debt);	//pay debt
+						do Menu.refresh_info_1(1);
+					}
+					else {
+						do p2.pay(debt);	//pay debt
+						do Menu.refresh_info_1(2);
+					}
+					let debt = 0;
+					do Msg.flash_msg(16, 48, " Hit E again", 0);
+					return;
+				}
+				else {	//if player does not want to pay
+					do Msg.msg_string(16, 48, " You cannot end");
+					do Msg.msg_string(17, 48, "     turn");	//player cannot end turn
+					do Menu.update_ptile(old_s_no);
+					do Sys.wait(700);
+					do Menu.clear_panel4();	//restore view
+					return;
+				}
+			}}
+		else {	//if user rolled the dice, paid rent and debt
+			do Menu.update_ptile(0);
+			do Menu.clear_panel4();	//clear default view
+			do Screen.setColor(false);
+			do Gameplay.set_current();	//remove box around current player
+			do Screen.setColor(true);
+			if (current_player = 1) {	//set other player as current player
+				let current_player = 2;
+			}
+			else{
+				let current_player = 1;
+			}
+			let rolled = false;	//reset dice rolled to not rolled
+			do Gameplay.set_current();	//draw box around other player
+		}}}
+		return;
+	}
+
+	function void build_properties(){	/*build deck of property title deeds*/
+	var String name;
+	let properties = Array.new(11);
+	let name = "Town Hall";
+	let properties[0] = Deeds.new(1, name, 100, 20, 50);
+	let name = "South Rail";
+	let properties[1] = Deeds.new(2, name, 100, 20, 50);
+	let name = "New Kent Road";
+	let properties[2] = Deeds.new(3, name, 150, 30, 75);
+	let name = "Vine Street";
+	let properties[3] = Deeds.new(4, name, 150, 30, 75);
+	let name = "West Rail";
+	let properties[4] = Deeds.new(5, name, 200, 40, 100);
+	let name = "Bond Street";
+	let properties[5] = Deeds.new(6, name, 200, 40, 100);
+	let name = "Strand";
+	let properties[6] = Deeds.new(7, name, 250, 50, 125);
+	let name = "North Rail";
+	let properties[7] = Deeds.new(8, name, 250, 50, 125);
+	let name = "Old Kent Road";
+	let properties[8] = Deeds.new(9, name, 300, 60, 150);
+	let name = "Park Lane";
+	let properties[9] = Deeds.new(10, name, 300, 60, 150);
+	let name = "East Rail";
+	let properties[10] = Deeds.new(11, name, 350, 70, 175);
+	return;
+	}
+
+	function int roll_dice(int d_no) {	/*roll given dice and return number*/
+		var int num;
+		do Gameplay.wait_dice(d_no, 4);	//shows 4 random numbers as fun animation
+		let num = Utils.rand_range(1 ,6);	//choose random number from 1 to 6
+		do Board.draw_dice_num(0,d_no);	//clear previous number on dice
+		do Board.draw_dice_num(num, d_no);	//draw new number on dice
+		return num;
+	}
+
+	function void roll_n_move() {	/*rolls both dice and moves given number of steps*/
+		var int num1, num2, move_space, old_pos, new_pos;
+		var String msg;
+		var boolean jail;
+		if (~rolled) {	//if not rolled yet
+			let num1 = Gameplay.roll_dice(1);
+			let num2 = Gameplay.roll_dice(2);	//roll both dice and get numbers returns
+			let move_space = num1 + num2;		//amount of steps to move
+			if (current_player = 1) {	
+				let old_pos = p1.get_pos();	//get old position of player
+				if (old_pos = 6) {	//if player is on jail tile
+					let jail = p1.jail_status();	//check jail status
+					if (jail) {	//if jailed
+						let jail = Gameplay.jail();	//invoke jail function and get new jail status
+					}
+				}
+				else {	//if player is not jailed
+					let jail = false;
+				}
+				if (~jail) {	//if new jail status after invoking jail function is false
+					let new_pos = Utils.modulo(old_pos + move_space, 24);	//board has 24 tiles (0 to 23)
+					do p1.move(new_pos);	//move player
+					do Board.reset();	//reset board
+					if ((old_pos + move_space) > 23){	//if player passes go
+					do Gameplay.go_collect();	//collect money
+					do Sys.wait(600);
+					}
+				}
+			}
+			else {	
+				let old_pos = p2.get_pos();	//get old position of player
+				if (old_pos = 6) {	//if player is on jail tile
+					let jail = p2.jail_status();	//check jail status
+					if (jail) {	//if jailed
+						let jail = Gameplay.jail();	//invoke jail function and get new jail status
+					}
+				}
+				else {	//if player is not jailed
+					let jail = false;
+				}
+				if (~jail) {	//if new jail status after invoking jail function is false
+					let new_pos = Utils.modulo(old_pos + move_space, 24);	//board has 24 tiles (0 to 23)
+					do p2.move(new_pos);	//move player
+					do Board.reset();	//reset board
+					if ((old_pos + move_space) > 23){	//if player passes go
+					do Gameplay.go_collect();	//collect money
+					}
+				}
+			}
+			let rolled = true;	//set rolled to true
+			do Gameplay.check();	//check current tile and invoke functions accordingly
+		}
+		else {	//if already rolled
+			do Msg.flash_msg(16,48, " Already rolled!",0);
+		}
+		return;
+	}
+
+	function void view_all(){
+		/*view all title deeds*/
+		var int i, flag, old_s_no;
+		var Array msg;
+		var boolean exit;
+		let exit = false;
+		let i = 1;
+		let old_s_no = Menu.get_s_no();
+		do Menu.update_ptile(i);	//clear default view
+		let msg = Array.new(5);
+		let msg[0] = "Right arrow:";
+		let msg[1] = "View next";
+		let msg[2] = "Left arrow:";
+		let msg[3] = "View previous";
+		let msg[4] = "Enter to exit";
+		do Msg.flash_msg_multi(12,48,msg,5);	//display help message
+		do Msg.flash_msg(16,48,"S.no - ", i);
+		do Menu.clear_panel4();
+		while (~exit){	//unless player wants to exit
+			let flag = Input.prompt_scroll();	//prompt user for input and store it
+			if (flag = 0){	//if user wants to exit
+				let exit = true;
+				do Menu.update_ptile(old_s_no);	//restore view
+				do Msg.flash_msg(16,48,"You're back!",0);
+				do Menu.clear_panel4();
+			}
+			else{ if (flag = 1){	//if user wants to view next property
+				if (i<11){	//11 is the last so 12 is invalid
+					let i = i + 1;	//increment property number
+					do Menu.update_ptile(i);
+					do Msg.flash_msg(16,48,"S.no - ", i);	
+					do Menu.clear_panel4();	//display new title deed
+				}
+				else{	//if last property
+					do Msg.flash_msg(16, 48, "Last property",0);
+				}
+			}
+			else{	//if user wants to view previous property
+				if (i>1){	//1 is the first so 0 is invalid
+					let i = i - 1;	//decrement property number
+					do Menu.update_ptile(i);
+					do Msg.flash_msg(16,48,"S.no - ", i);
+					do Menu.clear_panel4();	//display new title deed
+				}
+				else{	//if first property
+					do Msg.flash_msg(16,48, "First property",0);
+				}
+			}}
+		}
+		return;
+	}
+
+	function void view_sell_p1(){	/*view or sell deeds owned by player 1*/
+		var int i, flag, num_properties, s_no, old_s_no, sell_val;
+		var Array p1_properties, msg;
+		var boolean exit,sell_flag;
+		if (current_player = 2){	//only current player can view his/her own title deeds
+			do Msg.flash_msg(16, 48, " Not P1's turn",0);
+			return;
+		}
+		let exit = false;
+		let num_properties = p1.get_num_properties();
+		let p1_properties = p1.get_properties();
+		if (num_properties = 0){	//if player doesn't own any properties
+			do Msg.flash_msg(16, 48, "Nothing to show",0);
+			return;
+		}
+		// if player does own at least one property
+		let i = 0;
+		let s_no = p1_properties[i];	//get first property owned by player
+		let old_s_no = Menu.get_s_no();	//store old view
+		do Menu.update_ptile(s_no);	//update default view to first property owned by player
+		let msg = Array.new(6);
+		let msg[0] = "Right arrow:";
+		let msg[1] = "View Next";
+		let msg[2] = "Left arrow:";
+		let msg[3] = "View Previous";
+		let msg[4] = "S to sell";
+		let msg[5] = "Enter to exit";
+		do Msg.flash_msg_multi(11,48,msg,6);	//display help message
+		do Msg.flash_msg(16,48,"S.no - ", s_no);
+		do Menu.clear_panel4();
+		while (~exit){	//unless user wants to exit or has sold a property
+			let flag = Input.prompt_sell();
+			if (flag = 0){	//if user wants to exit
+				let exit = true;
+				do Menu.update_ptile(old_s_no);
+				do Msg.flash_msg(16,48,"You're back!",0);
+				do Menu.clear_panel4();	//restore view
+			}
+			else{ if (flag = 1){	//if user wants to view next property
+				if (i< (num_properties - 1)){	//if not last property owned by user
+					let i = i + 1;
+					let s_no = p1_properties[i];	//get next property
+					do Menu.update_ptile(s_no);
+					do Msg.flash_msg(16,48,"S.no - ", s_no);
+					do Menu.clear_panel4();	//display next property
+				}
+				else{	//if last property
+					do Msg.flash_msg(16, 48, "Last property",0);
+				}
+			}
+			else{ if (flag = 2){	//if user wants to view previous property
+				if (i>0){	//if not first property owned by user
+					let i = i - 1;
+					let s_no = p1_properties[i];
+					do Menu.update_ptile(s_no);	//get previous property
+					do Msg.flash_msg(16,48,"S.no - ", s_no);
+					do Menu.clear_panel4();	//display previous property
+				}
+				else{	//if first property
+					do Msg.flash_msg(16,48, "First property",0);
+				}
+			}
+			else{	//if user wants to sell currently displayed property
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();	//clear view to display message
+				do Msg.msg_string(16,48,"Are you sure?");
+				do Msg.msg_string(17,48,"    (y/n)");
+				let sell_flag = Input.prompt_y_n();	//prompt user for yes or no
+				if (sell_flag){	//if yes
+					let deed = properties[s_no - 1];
+					let sell_val = deed.get_mortgage();	//get resale value
+					do p1.sell(s_no);	//remove property from user's list	
+					do p1.collect(sell_val);	//collect resale amount
+					let exit = true;	//exit
+					do deed.update_owner(-1);	//update deed to unowned
+					do Menu.update_ptile(old_s_no);
+					do Menu.refresh_info_2();	//restore view and update player info
+					do Msg.flash_msg(16,48, "   +",sell_val);
+				}
+				else {	//if no
+					do Menu.update_ptile(s_no);	//restore owner's properties' view
+					do Menu.clear_panel4();
+				}
+			}}}
+		}
+		return;
+	}
+
+	function void view_sell_p2(){	/*view or sell deeds owned by player 2*/
+		var int i, flag, num_properties, s_no, old_s_no, sell_val;
+		var Array p2_properties, msg;
+		var boolean exit,sell_flag;
+		if (current_player = 1){	//only current player can view his/her own title deeds
+			do Msg.flash_msg(16, 48, " Not P2's turn",0);
+			return;
+		}
+		let exit = false;
+		let num_properties = p2.get_num_properties();
+		let p2_properties = p2.get_properties();
+		if (num_properties = 0){	//if player doesn't own any properties
+			do Msg.flash_msg(16, 48, "Nothing to show",0);
+			return;
+		}
+		// if player does own at least one property
+		let i = 0;
+		let s_no = p2_properties[i];	//get first property owned by player
+		let old_s_no = Menu.get_s_no();	//store old view
+		do Menu.update_ptile(s_no);	//update default view to first property owned by player
+		let msg = Array.new(6);
+		let msg[0] = "Right arrow:";
+		let msg[1] = "View Next";
+		let msg[2] = "Left arrow:";
+		let msg[3] = "View previous";
+		let msg[4] = "S to sell";
+		let msg[5] = "Enter to exit";
+		do Msg.flash_msg_multi(11,48,msg,6);
+		do Msg.flash_msg(16,48,"S.no - ", s_no);	//display help message
+		do Menu.clear_panel4();
+		while (~exit){	//unless user wants to exit or has sold a property
+			let flag = Input.prompt_sell();
+			if (flag = 0){	//if user wants to exit
+				let exit = true;
+				do Menu.update_ptile(old_s_no);
+				do Msg.flash_msg(16,48,"You're back!",0);
+				do Menu.clear_panel4();	//restore view
+			}
+			else{ if (flag = 1){	//if user wants to view next property
+				if (i< (num_properties - 1)){	//if not last property owned by user
+					let i = i + 1;
+					let s_no = p2_properties[i];	//get next property
+					do Menu.update_ptile(s_no);
+					do Msg.flash_msg(16,48,"S.no - ", s_no);
+					do Menu.clear_panel4();	//display next property
+				}
+				else{	//if last property
+					do Msg.flash_msg(16, 48, "Last property",0);
+				}
+			}
+			else{ if (flag = 2){	//if user wants to view previous property
+				if (i>0){	//if not first property owned by user
+					let i = i - 1;
+					let s_no = p2_properties[i];	//get previous property
+					do Menu.update_ptile(s_no);
+					do Msg.flash_msg(16,48,"S.no - ", s_no);
+					do Menu.clear_panel4();	//display previous property
+				}
+				else{	//if first property
+					do Msg.flash_msg(16,48, "First property",0);
+				}
+			}
+			else{	//if user wants to sell currently displayed property
+				do Menu.update_ptile(0);
+				do Menu.clear_panel4();	//clear view to display message
+				do Msg.msg_string(16,48,"Are you sure?");
+				do Msg.msg_string(17,48,"    (y/n)");
+				let sell_flag = Input.prompt_y_n();	//prompt user for yes or no
+				if (sell_flag){	//if yes
+					let deed = properties[s_no - 1];
+					let sell_val = deed.get_mortgage();	//get resale value
+					do p2.sell(s_no);	//remove property from user's list
+					do p2.collect(sell_val);	//collect resale amount
+					let exit = true;	//exit
+					do deed.update_owner(-1);	//update deed to unowned
+					do Menu.update_ptile(old_s_no);
+					do Menu.refresh_info_2();	//restore view and update player info
+					do Msg.flash_msg(16,48, "   +",sell_val);
+				}
+				else {	//if no
+					do Menu.update_ptile(s_no);
+					do Menu.clear_panel4();	//restore owner's properties' view
+				}
+			}}}
+		}
+		return;
+	}
+
+	function void move(int move_space, boolean jail){	/*move user by given number of steps and collect go money if not jailed*/
+		var int old_pos, new_pos;
+		if (current_player = 1) {	
+			let old_pos = p1.get_pos();	//get old position
+			let new_pos = Utils.modulo(old_pos + move_space, 24);	//there are 24 tiles on the board (0 to 23)
+			if (new_pos < 0) {	//for move back, if new position ends up being negative
+				let new_pos = new_pos + 24;	//add 24 to it
+			}
+			do p1.move(new_pos);	//set player position to new position
+			do Board.reset();	//reset board
+			if ((old_pos + move_space) > 23){	//if player passes go
+					if (~jail){	//if player is not jailed
+						do Gameplay.go_collect();	//collect go money
+						do Sys.wait(600);
+					}
+			}
+		}
+		else {	
+			let old_pos = p2.get_pos();	//get old position
+			let new_pos = Utils.modulo(old_pos + move_space, 24);	//there are 24 tiles on the board (0 to 23)
+			if (new_pos < 0) {	//for move back, if new position ends up being negative
+				let new_pos = new_pos + 24;	//add 24 to it
+			}
+			do p2.move(new_pos);	//set player position to new position
+			do Board.reset();	//reset board
+			if ((old_pos + move_space) > 23){	//if player passes go
+					if (~jail){	//if player is not jailed
+						do Gameplay.go_collect();	//collect go money
+						do Sys.wait(600);
+					}
+			}
+		}
+		do Gameplay.check();
+		return;
+	}
+
+	function void wait_dice(int dice_no, int wait_time) {	/*dice animation - displays random numbers on given dice*/
+		var int num;
+		let num = Utils.rand_range(1,6);	//get random number from 1 to 6
+		do Board.draw_dice_num(0,dice_no);	//clear previous number on dice
+		do Board.draw_dice_num(num, dice_no);	//draw new number on dice
+		do Sys.wait(200);
+		let wait_time = wait_time - 1;	//reduce number of times this must be done by one
+		if (wait_time > 0) {
+			do Gameplay.wait_dice(dice_no, wait_time);	//call function to display random number again till wait time is 0
+		}
+		return;
+	}
+
+	function void create_players(){	/*create and initialise players 1 and 2*/
+		let p1 = Players.new();
+		let p2 = Players.new();
+		return;
+	}
+
+	function void set_current() {	/*draw box around current player*/
+		if (current_player = 1) {
+			do Shapes.rect(0,0,126,127);
+		}
+		else {
+			do Shapes.rect(0,127,126,255);
+		}
+		return;
+	}
+
+	function int player1_pos(){	/*return position of player 1*/
+		return p1.get_pos();
+	}
+
+	function int player2_pos(){	/*return position of player 2*/
+		return p2.get_pos();
+	}
+
+	function void players_info(){	/*print info of both player*/
+
+		do Msg.msg_string(1,3,"Player 1");
+		do Msg.msg_string(3,1,"Money: $ ");
+		do Output.printInt(p1.get_money());
+		do Msg.msg_string(4,1,"Properties: ");
+		do Output.printInt(p1.get_num_properties());
+		do Msg.msg_string(5,1,"Jailed: ");
+		if (p1.jail_status()){
+			do Msg.msg_string(5,9,"yes");
+		}
+		else{
+			do Msg.msg_string(5,9,"no");
+		}
+		do Msg.msg_string(8,1,"[1] View/sell");
+		do Msg.msg_string(9,1,"  owned deeds");
+
+		do Msg.msg_string(13,3,"Player 2");
+		do Msg.msg_string(15,1,"Money: $ ");
+		do Output.printInt(p2.get_money());
+		do Msg.msg_string(16,1,"Properties: ");
+		do Output.printInt(p2.get_num_properties());
+		do Msg.msg_string(17,1,"Jailed: ");
+		if (p2.jail_status()){
+			do Msg.msg_string(17,9,"yes");
+		}
+		else{
+			do Msg.msg_string(17,9,"no");
+		}
+		do Msg.msg_string(20,1,"[2] View/sell");
+		do Msg.msg_string(21,1,"   owned deeds");
+
+		return;
+	}
+
+	function void player1_info(){	/*print info of player 1*/
+		do Msg.msg_string(1,3,"Player 1");
+		do Msg.msg_string(3,1,"Money: $ ");
+		do Output.printInt(p1.get_money());
+		do Msg.msg_string(4,1,"Properties: ");
+		do Output.printInt(p1.get_num_properties());
+		do Msg.msg_string(5,1,"Jailed: ");
+		if (p1.jail_status()){
+			do Msg.msg_string(5,9,"yes");
+		}
+		else{
+			do Msg.msg_string(5,9,"no");
+		}
+		do Msg.msg_string(8,1,"[1] View/sell");
+		do Msg.msg_string(9,1,"   owned deeds");
+		return;
+	}
+
+	function void player2_info(){	/*print info of player 2*/
+		do Msg.msg_string(13,3,"Player 2");
+		do Msg.msg_string(15,1,"Money: $ ");
+		do Output.printInt(p2.get_money());
+		do Msg.msg_string(16,1,"Properties: ");
+		do Output.printInt(p2.get_num_properties());
+		do Msg.msg_string(17,1,"Jailed: ");
+		if (p2.jail_status()){
+			do Msg.msg_string(17,9,"yes");
+		}
+		else{
+			do Msg.msg_string(17,9,"no");
+		}
+		do Msg.msg_string(20,1,"[2] View/sell");
+		do Msg.msg_string(21,1,"   owned deeds");
+		return;
+	}
+
+	function Array get_properties(){	/*return Array of property title deeds*/
+		return properties;
+	}
+}

@@ -1,0 +1,140 @@
+function Msg.flash_corner_msg 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push constant 383
+push constant 220
+push constant 511
+push constant 255
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push argument 0
+push argument 1
+push argument 2
+call Msg.msg_string 3
+pop temp 0
+push constant 800
+call Sys.wait 1
+pop temp 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push constant 383
+push constant 220
+push constant 511
+push constant 255
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push constant 0
+return
+function Msg.flash_msg 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push constant 383
+push constant 100
+push constant 511
+push constant 255
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push argument 0
+push argument 1
+push argument 2
+call Msg.msg_string 3
+pop temp 0
+push argument 3
+push constant 0
+eq
+not
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push argument 3
+call Output.printInt 1
+pop temp 0
+label IF_FALSE0
+push constant 800
+call Sys.wait 1
+pop temp 0
+call Menu.clear_panel4 0
+pop temp 0
+push constant 0
+return
+function Msg.flash_msg_multi 2
+push constant 0
+pop local 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push constant 383
+push constant 100
+push constant 511
+push constant 255
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+label WHILE_EXP0
+push local 0
+push argument 3
+lt
+not
+if-goto WHILE_END0
+push local 0
+push argument 2
+add
+pop pointer 1
+push that 0
+pop local 1
+push argument 0
+push argument 1
+push local 1
+call Msg.msg_string 3
+pop temp 0
+push argument 0
+push constant 2
+add
+pop argument 0
+push local 0
+push constant 1
+add
+pop local 0
+goto WHILE_EXP0
+label WHILE_END0
+push argument 2
+call Array.dispose 1
+pop temp 0
+push constant 1300
+call Sys.wait 1
+pop temp 0
+call Menu.clear_panel4 0
+pop temp 0
+push constant 0
+return
+function Msg.msg_string 0
+push argument 0
+push argument 1
+call Output.moveCursor 2
+pop temp 0
+push argument 2
+call Output.printString 1
+pop temp 0
+push argument 2
+call String.dispose 1
+pop temp 0
+push constant 0
+return
